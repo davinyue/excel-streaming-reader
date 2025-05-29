@@ -14,27 +14,27 @@ class LRUCache {
     }
 
     String getIfPresent(int key) {
-        String s = map.get(key);
+        String s = this.map.get(key);
         if (s != null) {
-            map.remove(key);
-            map.put(key, s);
+            this.map.remove(key);
+            this.map.put(key, s);
         }
         return s;
     }
 
     void store(int key, String val) {
         long valSize = strSize(val);
-        if (valSize > capacityBytes) {
+        if (valSize > this.capacityBytes) {
             throw new RuntimeException("Insufficient cache space.");
         }
-        Iterator<String> it = map.values().iterator();
-        while (valSize + sizeBytes > capacityBytes) {
+        Iterator<String> it = this.map.values().iterator();
+        while (valSize + this.sizeBytes > this.capacityBytes) {
             String s = it.next();
-            sizeBytes -= strSize(s);
+            this.sizeBytes -= strSize(s);
             it.remove();
         }
-        map.put(key, val);
-        sizeBytes += valSize;
+        this.map.put(key, val);
+        this.sizeBytes += valSize;
     }
 
     //  just an estimation

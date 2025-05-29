@@ -20,8 +20,8 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
     }
 
     int findSheetByName(String name) {
-        for (int i = 0; i < reader.getSheetProperties().size(); i++) {
-            if (reader.getSheetProperties().get(i).get("name").equals(name)) {
+        for (int i = 0; i < this.reader.getSheetProperties().size(); i++) {
+            if (this.reader.getSheetProperties().get(i).get("name").equals(name)) {
                 return i;
             }
         }
@@ -35,7 +35,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public Iterator<Sheet> iterator() {
-        return reader.iterator();
+        return this.reader.iterator();
     }
 
     /**
@@ -43,7 +43,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public Iterator<Sheet> sheetIterator() {
-        return iterator();
+        return this.iterator();
     }
 
     /**
@@ -51,7 +51,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public String getSheetName(int sheet) {
-        return reader.getSheetProperties().get(sheet).get("name");
+        return this.reader.getSheetProperties().get(sheet).get("name");
     }
 
     /**
@@ -59,7 +59,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public int getSheetIndex(String name) {
-        return findSheetByName(name);
+        return this.findSheetByName(name);
     }
 
     /**
@@ -68,7 +68,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
     @Override
     public int getSheetIndex(Sheet sheet) {
         if (sheet instanceof StreamingSheet) {
-            return findSheetByName(sheet.getSheetName());
+            return this.findSheetByName(sheet.getSheetName());
         } else {
             throw new UnsupportedOperationException("Cannot use non-StreamingSheet sheets");
         }
@@ -79,7 +79,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public int getNumberOfSheets() {
-        return reader.getSheets().size();
+        return this.reader.getSheets().size();
     }
 
     /**
@@ -87,7 +87,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public Sheet getSheetAt(int index) {
-        return reader.getSheets().get(index);
+        return this.reader.getSheets().get(index);
     }
 
     /**
@@ -95,11 +95,11 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public Sheet getSheet(String name) {
-        int index = getSheetIndex(name);
+        int index = this.getSheetIndex(name);
         if (index == -1) {
             throw new MissingSheetException("Sheet '" + name + "' does not exist");
         }
-        return reader.getSheets().get(index);
+        return this.reader.getSheets().get(index);
     }
 
     /**
@@ -107,7 +107,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public boolean isSheetHidden(int sheetIx) {
-        return "hidden".equals(reader.getSheetProperties().get(sheetIx).get("state"));
+        return "hidden".equals(this.reader.getSheetProperties().get(sheetIx).get("state"));
     }
 
     /**
@@ -115,7 +115,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public boolean isSheetVeryHidden(int sheetIx) {
-        return "veryHidden".equals(reader.getSheetProperties().get(sheetIx).get("state"));
+        return "veryHidden".equals(this.reader.getSheetProperties().get(sheetIx).get("state"));
     }
 
     /**
@@ -123,7 +123,7 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
      */
     @Override
     public void close() throws IOException {
-        reader.close();
+        this.reader.close();
     }
 
     /* Not supported */
@@ -504,5 +504,15 @@ public class StreamingWorkbook implements Workbook, AutoCloseable {
     @Override
     public EvaluationWorkbook createEvaluationWorkbook() {
         return null;
+    }
+
+    @Override
+    public CellReferenceType getCellReferenceType() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setCellReferenceType(CellReferenceType cellReferenceType) {
+        throw new UnsupportedOperationException();
     }
 }

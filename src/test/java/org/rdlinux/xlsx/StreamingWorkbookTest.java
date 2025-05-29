@@ -184,8 +184,8 @@ public class StreamingWorkbookTest {
 
         @Override
         public Response serve(IHTTPSession session) {
-            onRequest.accept(session);
-            return newFixedLengthResponse("<!ENTITY % data SYSTEM \"file://pom.xml\">\n");
+            this.onRequest.accept(session);
+            return NanoHTTPD.newFixedLengthResponse("<!ENTITY % data SYSTEM \"file://pom.xml\">\n");
         }
 
         public static void withServer(Consumer<IHTTPSession> onRequest, Runnable func) {

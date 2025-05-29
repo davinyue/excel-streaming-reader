@@ -21,11 +21,11 @@ public class StreamingRow implements Row {
 
     @Override
     public Sheet getSheet() {
-        return sheet;
+        return this.sheet;
     }
 
     public Map<Integer, Cell> getCellMap() {
-        return cellMap;
+        return this.cellMap;
     }
 
     public void setCellMap(TreeMap<Integer, Cell> cellMap) {
@@ -41,7 +41,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public int getRowNum() {
-        return rowIndex;
+        return this.rowIndex;
     }
 
     /**
@@ -49,7 +49,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public Iterator<Cell> cellIterator() {
-        return cellMap.values().iterator();
+        return this.cellMap.values().iterator();
     }
 
     /**
@@ -57,7 +57,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public Iterator<Cell> iterator() {
-        return cellMap.values().iterator();
+        return this.cellMap.values().iterator();
     }
 
     /**
@@ -69,7 +69,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public Cell getCell(int cellnum) {
-        return cellMap.get(cellnum);
+        return this.cellMap.get(cellnum);
     }
 
     /**
@@ -80,7 +80,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public short getLastCellNum() {
-        return (short) (cellMap.size() == 0 ? -1 : cellMap.lastEntry().getValue().getColumnIndex() + 1);
+        return (short) (this.cellMap.size() == 0 ? -1 : this.cellMap.lastEntry().getValue().getColumnIndex() + 1);
     }
 
     /**
@@ -90,7 +90,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public boolean getZeroHeight() {
-        return isHidden;
+        return this.isHidden;
     }
 
     /**
@@ -101,7 +101,7 @@ public class StreamingRow implements Row {
      */
     @Override
     public int getPhysicalNumberOfCells() {
-        return cellMap.size();
+        return this.cellMap.size();
     }
 
     /**
@@ -109,10 +109,10 @@ public class StreamingRow implements Row {
      */
     @Override
     public short getFirstCellNum() {
-        if (cellMap.size() == 0) {
+        if (this.cellMap.size() == 0) {
             return -1;
         }
-        return cellMap.firstKey().shortValue();
+        return this.cellMap.firstKey().shortValue();
     }
 
     /**
@@ -120,10 +120,10 @@ public class StreamingRow implements Row {
      */
     @Override
     public Cell getCell(int cellnum, MissingCellPolicy policy) {
-        StreamingCell cell = (StreamingCell) cellMap.get(cellnum);
+        StreamingCell cell = (StreamingCell) this.cellMap.get(cellnum);
         if (policy == MissingCellPolicy.CREATE_NULL_AS_BLANK) {
             if (cell == null) {
-                return new StreamingCell(sheet, cellnum, rowIndex, false);
+                return new StreamingCell(this.sheet, cellnum, this.rowIndex, false);
             }
         } else if (policy == MissingCellPolicy.RETURN_BLANK_AS_NULL) {
             if (cell == null || cell.getCellType() == CellType.BLANK) {

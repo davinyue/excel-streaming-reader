@@ -22,7 +22,7 @@ public class StreamingSheet implements Sheet {
     }
 
     StreamingSheetReader getReader() {
-        return reader;
+        return this.reader;
     }
 
     /* Supported */
@@ -32,7 +32,7 @@ public class StreamingSheet implements Sheet {
      */
     @Override
     public Iterator<Row> iterator() {
-        return reader.iterator();
+        return this.reader.iterator();
     }
 
     /**
@@ -40,7 +40,7 @@ public class StreamingSheet implements Sheet {
      */
     @Override
     public Iterator<Row> rowIterator() {
-        return reader.iterator();
+        return this.reader.iterator();
     }
 
     /**
@@ -48,7 +48,7 @@ public class StreamingSheet implements Sheet {
      */
     @Override
     public String getSheetName() {
-        return name;
+        return this.name;
     }
 
     /**
@@ -59,7 +59,7 @@ public class StreamingSheet implements Sheet {
      */
     @Override
     public boolean isColumnHidden(int columnIndex) {
-        return reader.isColumnHidden(columnIndex);
+        return this.reader.isColumnHidden(columnIndex);
     }
 
     /* Unsupported */
@@ -111,7 +111,7 @@ public class StreamingSheet implements Sheet {
      */
     @Override
     public int getLastRowNum() {
-        return reader.getLastRowNum();
+        return this.reader.getLastRowNum();
     }
 
     /**
@@ -498,11 +498,21 @@ public class StreamingSheet implements Sheet {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public double getMargin(PageMargin pageMargin) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Not supported
      */
     @Override
     public void setMargin(short margin, double size) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setMargin(PageMargin margin, double size) {
         throw new UnsupportedOperationException();
     }
 
@@ -607,6 +617,11 @@ public class StreamingSheet implements Sheet {
      */
     @Override
     public void createSplitPane(int xSplitPos, int ySplitPos, int leftmostColumn, int topRow, int activePane) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void createSplitPane(int xSplitPos, int ySplitPos, int leftmostColumn, int topRow, PaneType activePane) {
         throw new UnsupportedOperationException();
     }
 

@@ -5,22 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.rdlinux</groupId>
     <artifactId>xlsx-streamer</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
     <name>Streaming Excel reader</name>
     <description>Streaming Excel reader</description>
     <url>https://github.com/davinyue/excel-streaming-reader</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <apache.poi.version>5.0.0</apache.poi.version>
-        <slf4j.version>1.7.30</slf4j.version>
+        <apache.poi.version>5.4.1</apache.poi.version>
+        <slf4j.version>2.0.17</slf4j.version>
     </properties>
 
     <developers>
         <developer>
-            <id>monitorjbl</id>
-            <name>Taylor Jones</name>
-            <email>monitorjbl@gmail.com</email>
+            <id>DavinYue</id>
+            <name>DavinYue</name>
+            <email>davinyue@gmail.com</email>
         </developer>
     </developers>
 
@@ -61,6 +61,15 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -95,21 +104,9 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
     <scm>
         <url>https://github.com/davinyue/excel-streaming-reader.git</url>
     </scm>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
-    </distributionManagement>
 
     <dependencies>
         <dependency>
@@ -143,7 +140,7 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.14.1</version>
+            <version>2.24.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -156,12 +153,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.nanohttpd</groupId>
-            <artifactId>nanohttpd</artifactId>
-            <version>2.3.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

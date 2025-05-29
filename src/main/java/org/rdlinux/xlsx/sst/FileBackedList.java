@@ -36,28 +36,28 @@ public class FileBackedList implements AutoCloseable {
 
     public FileBackedList(File file, final int cacheSizeBytes) throws IOException {
         this.raf = new RandomAccessFile(file, "rw");
-        this.channel = raf.getChannel();
-        this.filesize = raf.length();
+        this.channel = this.raf.getChannel();
+        this.filesize = this.raf.length();
         this.cache = new LRUCache(cacheSizeBytes);
     }
 
     public void add(String str) {
         try {
-            writeToFile(str);
+            this.writeToFile(str);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public String getAt(int index) {
-        String s = cache.getIfPresent(index);
+        String s = this.cache.getIfPresent(index);
         if (s != null) {
             return s;
         }
 
         try {
-            String val = readFromFile(pointers.get(index));
-            cache.store(index, val);
+            String val = this.readFromFile(this.pointers.get(index));
+            this.cache.store(index, val);
             return val;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -65,23 +65,23 @@ public class FileBackedList implements AutoCloseable {
     }
 
     private void writeToFile(String str) throws IOException {
-        synchronized (channel) {
+        synchronized (this.channel) {
             ByteBuffer bytes = ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8));
             ByteBuffer length = ByteBuffer.allocate(4).putInt(bytes.array().length);
 
-            channel.position(filesize);
-            pointers.add(channel.position());
+            this.channel.position(this.filesize);
+            this.pointers.add(this.channel.position());
             length.flip();
-            channel.write(length);
-            channel.write(bytes);
+            this.channel.write(length);
+            this.channel.write(bytes);
 
-            filesize += 4 + bytes.array().length;
+            this.filesize += 4 + bytes.array().length;
         }
     }
 
     private String readFromFile(long pointer) throws IOException {
-        synchronized (channel) {
-            FileChannel fc = channel.position(pointer);
+        synchronized (this.channel) {
+            FileChannel fc = this.channel.position(pointer);
 
             //get length of entry
             ByteBuffer buffer = ByteBuffer.wrap(new byte[4]);
@@ -101,7 +101,7 @@ public class FileBackedList implements AutoCloseable {
     @Override
     public void close() {
         try {
-            raf.close();
+            this.raf.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -65,7 +65,7 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
      */
     @Override
     public Iterator<Row> iterator() {
-        return workbook.first().iterator();
+        return this.workbook.first().iterator();
     }
 
     /**
@@ -76,13 +76,13 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
     @Override
     public void close() throws IOException {
         try {
-            workbook.close();
+            this.workbook.close();
         } finally {
-            if (tmp != null) {
+            if (this.tmp != null) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Deleting tmp file [" + tmp.getAbsolutePath() + "]");
+                    log.debug("Deleting tmp file [" + this.tmp.getAbsolutePath() + "]");
                 }
-                tmp.delete();
+                this.tmp.delete();
             }
         }
     }
@@ -100,11 +100,11 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
         private String password;
 
         public int getRowCacheSize() {
-            return rowCacheSize;
+            return this.rowCacheSize;
         }
 
         public int getBufferSize() {
-            return bufferSize;
+            return this.bufferSize;
         }
 
         /**
@@ -112,7 +112,7 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
          * @deprecated This method will be removed in a future release.
          */
         public int getSheetIndex() {
-            return sheetIndex;
+            return this.sheetIndex;
         }
 
         /**
@@ -120,14 +120,14 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
          * @deprecated This method will be removed in a future release.
          */
         public String getSheetName() {
-            return sheetName;
+            return this.sheetName;
         }
 
         /**
          * @return The password to use to unlock this workbook
          */
         public String getPassword() {
-            return password;
+            return this.password;
         }
 
         /**
@@ -135,7 +135,7 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
          * cache will be used and the entire table will be loaded into memory.
          */
         public int getSstCacheSizeBytes() {
-            return sstCacheSizeBytes;
+            return this.sstCacheSizeBytes;
         }
 
         /**
@@ -283,10 +283,10 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
         public StreamingReader read(InputStream is) {
             File f = null;
             try {
-                f = writeInputStreamToFile(is, bufferSize);
-                log.debug("Created temp file [" + f.getAbsolutePath() + "]");
+                f = writeInputStreamToFile(is, this.bufferSize);
+                StreamingReader.log.debug("Created temp file [" + f.getAbsolutePath() + "]");
 
-                StreamingReader r = read(f);
+                StreamingReader r = this.read(f);
                 r.tmp = f;
                 return r;
             } catch (IOException e) {
@@ -312,12 +312,12 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
         public StreamingReader read(File f) {
             try {
                 OPCPackage pkg;
-                if (password != null) {
+                if (this.password != null) {
                     // Based on: https://poi.apache.org/encryption.html
                     POIFSFileSystem poifs = new POIFSFileSystem(f);
                     EncryptionInfo info = new EncryptionInfo(poifs);
                     Decryptor d = Decryptor.getInstance(info);
-                    d.verifyPassword(password);
+                    d.verifyPassword(this.password);
                     pkg = OPCPackage.open(d.getDataStream(poifs));
                 } else {
                     pkg = OPCPackage.open(f);
@@ -328,12 +328,12 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
 
                 SharedStringsTable sst;
                 File sstCache = null;
-                if (sstCacheSizeBytes > 0) {
+                if (this.sstCacheSizeBytes > 0) {
                     sstCache = Files.createTempFile("", "").toFile();
-                    log.debug("Created sst cache file [" + sstCache.getAbsolutePath() + "]");
-                    sst = BufferedStringsTable.getSharedStringsTable(sstCache, sstCacheSizeBytes, pkg);
+                    StreamingReader.log.debug("Created sst cache file [" + sstCache.getAbsolutePath() + "]");
+                    sst = BufferedStringsTable.getSharedStringsTable(sstCache, this.sstCacheSizeBytes, pkg);
                 } else {
-                    sst = reader.getSharedStringsTable();
+                    sst = (SharedStringsTable) reader.getSharedStringsTable();
                 }
 
                 StylesTable styles = reader.getStylesTable();
@@ -344,14 +344,14 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
                         use1904Dates = ("1".equals(date1904.getTextContent()));
                     }
                 }
-                InputStream sheet = findSheet(reader);
+                InputStream sheet = this.findSheet(reader);
                 if (sheet == null) {
-                    throw new MissingSheetException("Unable to find sheet at index [" + sheetIndex + "]");
+                    throw new MissingSheetException("Unable to find sheet at index [" + this.sheetIndex + "]");
                 }
 
                 XMLEventReader parser = StaxHelper.newXMLInputFactory().createXMLEventReader(sheet);
 
-                return new StreamingReader(new StreamingWorkbookReader(sst, sstCache, pkg, new StreamingSheetReader(sst, styles, parser, use1904Dates, rowCacheSize),
+                return new StreamingReader(new StreamingWorkbookReader(sst, sstCache, pkg, new StreamingSheetReader(sst, styles, parser, use1904Dates, this.rowCacheSize),
                         this));
             } catch (IOException e) {
                 throw new OpenException("Failed to open file", e);
@@ -366,13 +366,13 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
          * @deprecated This will be removed when the transition to the 1.x API is complete
          */
         private InputStream findSheet(XSSFReader reader) throws IOException, InvalidFormatException {
-            int index = sheetIndex;
-            if (sheetName != null) {
+            int index = this.sheetIndex;
+            if (this.sheetName != null) {
                 index = -1;
                 //This file is separate from the worksheet data, and should be fairly small
                 NodeList nl = searchForNodeList(document(reader.getWorkbookData()), "/ss:workbook/ss:sheets/ss:sheet");
                 for (int i = 0; i < nl.getLength(); i++) {
-                    if (Objects.equals(nl.item(i).getAttributes().getNamedItem("name").getTextContent(), sheetName)) {
+                    if (Objects.equals(nl.item(i).getAttributes().getNamedItem("name").getTextContent(), this.sheetName)) {
                         index = i;
                     }
                 }
@@ -388,7 +388,7 @@ public class StreamingReader implements Iterable<Row>, AutoCloseable {
                 InputStream is = iter.next();
                 if (i++ == index) {
                     sheet = is;
-                    log.debug("Found sheet at index [" + sheetIndex + "]");
+                    StreamingReader.log.debug("Found sheet at index [" + this.sheetIndex + "]");
                     break;
                 }
             }

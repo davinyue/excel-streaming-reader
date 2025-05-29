@@ -27,7 +27,7 @@ public class BufferedStringsTable extends SharedStringsTable implements AutoClos
 
     private BufferedStringsTable(PackagePart part, File file, int cacheSizeBytes) throws IOException {
         this.list = new FileBackedList(file, cacheSizeBytes);
-        readFrom(part.getInputStream());
+        this.readFrom(part.getInputStream());
     }
 
     @Override
@@ -39,7 +39,7 @@ public class BufferedStringsTable extends SharedStringsTable implements AutoClos
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
                 if (xmlEvent.isStartElement() && xmlEvent.asStartElement().getName().getLocalPart().equals("si")) {
-                    list.add(parseCT_Rst(xmlEventReader));
+                    this.list.add(this.parseCT_Rst(xmlEventReader));
                 }
             }
         } catch (XMLStreamException e) {
@@ -62,11 +62,11 @@ public class BufferedStringsTable extends SharedStringsTable implements AutoClos
                     buf.append(xmlEventReader.getElementText());
                     break;
                 case "r": // Rich Text Run
-                    parseCT_RElt(xmlEventReader, buf);
+                    this.parseCT_RElt(xmlEventReader, buf);
                     break;
                 case "rPh": // Phonetic Run
                 case "phoneticPr": // Phonetic Properties
-                    skipElement(xmlEventReader);
+                    this.skipElement(xmlEventReader);
                     break;
                 default:
                     throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
@@ -89,7 +89,7 @@ public class BufferedStringsTable extends SharedStringsTable implements AutoClos
                     buf.append(xmlEventReader.getElementText());
                     break;
                 case "rPr": // Run Properties
-                    skipElement(xmlEventReader);
+                    this.skipElement(xmlEventReader);
                     break;
                 default:
                     throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
@@ -100,18 +100,18 @@ public class BufferedStringsTable extends SharedStringsTable implements AutoClos
     private void skipElement(XMLEventReader xmlEventReader) throws XMLStreamException {
         // Precondition: pointing to start element;  Post condition: pointing to end element
         while (xmlEventReader.nextTag().isStartElement()) {
-            skipElement(xmlEventReader); // recursively skip over child
+            this.skipElement(xmlEventReader); // recursively skip over child
         }
     }
 
     @Override
     public RichTextString getItemAt(int idx) {
-        return new XSSFRichTextString(list.getAt(idx));
+        return new XSSFRichTextString(this.list.getAt(idx));
     }
 
     @Override
     public void close() throws IOException {
         super.close();
-        list.close();
+        this.list.close();
     }
 }

@@ -74,17 +74,17 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
     }
 
     public StreamingSheetReader first() {
-        return sheets.get(0).getReader();
+        return this.sheets.get(0).getReader();
     }
 
     public void init(InputStream is) {
         File f = null;
         try {
-            f = writeInputStreamToFile(is, builder.getBufferSize());
+            f = writeInputStreamToFile(is, this.builder.getBufferSize());
             log.debug("Created temp file [" + f.getAbsolutePath() + "]");
 
-            init(f);
-            tmp = f;
+            this.init(f);
+            this.tmp = f;
         } catch (IOException e) {
             throw new ReadException("Unable to read input stream", e);
         } catch (RuntimeException e) {
@@ -97,24 +97,24 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
 
     public void init(File f) {
         try {
-            if (builder.getPassword() != null) {
+            if (this.builder.getPassword() != null) {
                 // Based on: https://poi.apache.org/encryption.html
                 POIFSFileSystem poifs = new POIFSFileSystem(f);
                 EncryptionInfo info = new EncryptionInfo(poifs);
                 Decryptor d = Decryptor.getInstance(info);
-                d.verifyPassword(builder.getPassword());
-                pkg = OPCPackage.open(d.getDataStream(poifs));
+                d.verifyPassword(this.builder.getPassword());
+                this.pkg = OPCPackage.open(d.getDataStream(poifs));
             } else {
-                pkg = OPCPackage.open(f);
+                this.pkg = OPCPackage.open(f);
             }
 
-            XSSFReader reader = new XSSFReader(pkg);
-            if (builder.getSstCacheSizeBytes() > 0) {
-                sstCache = Files.createTempFile("", "").toFile();
-                log.debug("Created sst cache file [" + sstCache.getAbsolutePath() + "]");
-                sst = BufferedStringsTable.getSharedStringsTable(sstCache, builder.getSstCacheSizeBytes(), pkg);
+            XSSFReader reader = new XSSFReader(this.pkg);
+            if (this.builder.getSstCacheSizeBytes() > 0) {
+                this.sstCache = Files.createTempFile("", "").toFile();
+                log.debug("Created sst cache file [" + this.sstCache.getAbsolutePath() + "]");
+                this.sst = BufferedStringsTable.getSharedStringsTable(this.sstCache, this.builder.getSstCacheSizeBytes(), this.pkg);
             } else {
-                sst = reader.getSharedStringsTable();
+                this.sst = (SharedStringsTable) reader.getSharedStringsTable();
             }
 
             StylesTable styles = reader.getStylesTable();
@@ -122,11 +122,11 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
             if (workbookPr.getLength() == 1) {
                 final Node date1904 = workbookPr.item(0).getAttributes().getNamedItem("date1904");
                 if (date1904 != null) {
-                    use1904Dates = ("1".equals(date1904.getTextContent()));
+                    this.use1904Dates = ("1".equals(date1904.getTextContent()));
                 }
             }
 
-            loadSheets(reader, sst, styles, builder.getRowCacheSize());
+            this.loadSheets(reader, this.sst, styles, this.builder.getRowCacheSize());
         } catch (IOException e) {
             throw new OpenException("Failed to open file", e);
         } catch (OpenXML4JException | XMLStreamException e) {
@@ -138,7 +138,7 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
 
     void loadSheets(XSSFReader reader, SharedStringsTable sst, StylesTable stylesTable, int rowCacheSize)
             throws IOException, InvalidFormatException, XMLStreamException {
-        lookupSheetNames(reader);
+        this.lookupSheetNames(reader);
 
         //Some workbooks have multiple references to the same sheet. Need to filter
         //them out before creating the XMLEventReader by keeping track of their URIs.
@@ -154,12 +154,12 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
         int i = 0;
         for (URI uri : sheetStreams.keySet()) {
             XMLEventReader parser = StaxHelper.newXMLInputFactory().createXMLEventReader(sheetStreams.get(uri));
-            sheets.add(new StreamingSheet(sheetProperties.get(i++).get("name"), new StreamingSheetReader(sst, stylesTable, parser, use1904Dates, rowCacheSize)));
+            this.sheets.add(new StreamingSheet(this.sheetProperties.get(i++).get("name"), new StreamingSheetReader(sst, stylesTable, parser, this.use1904Dates, rowCacheSize)));
         }
     }
 
     void lookupSheetNames(XSSFReader reader) throws IOException, InvalidFormatException {
-        sheetProperties.clear();
+        this.sheetProperties.clear();
         NodeList nl = searchForNodeList(document(reader.getWorkbookData()), "/ss:workbook/ss:sheets/ss:sheet");
         for (int i = 0; i < nl.getLength(); i++) {
             Map<String, String> props = new HashMap<>();
@@ -167,43 +167,43 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
 
             Node state = nl.item(i).getAttributes().getNamedItem("state");
             props.put("state", state == null ? "visible" : state.getTextContent());
-            sheetProperties.add(props);
+            this.sheetProperties.add(props);
         }
     }
 
     List<? extends Sheet> getSheets() {
-        return sheets;
+        return this.sheets;
     }
 
     public List<Map<String, String>> getSheetProperties() {
-        return sheetProperties;
+        return this.sheetProperties;
     }
 
     @Override
     public Iterator<Sheet> iterator() {
-        return new StreamingSheetIterator(sheets.iterator());
+        return new StreamingSheetIterator(this.sheets.iterator());
     }
 
     @Override
     public void close() throws IOException {
         try {
-            for (StreamingSheet sheet : sheets) {
+            for (StreamingSheet sheet : this.sheets) {
                 sheet.getReader().close();
             }
-            pkg.revert();
+            this.pkg.revert();
         } finally {
-            if (tmp != null) {
+            if (this.tmp != null) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Deleting tmp file [" + tmp.getAbsolutePath() + "]");
+                    log.debug("Deleting tmp file [" + this.tmp.getAbsolutePath() + "]");
                 }
-                tmp.delete();
+                this.tmp.delete();
             }
-            if (sst instanceof BufferedStringsTable) {
+            if (this.sst instanceof BufferedStringsTable) {
                 if (log.isDebugEnabled()) {
                     log.debug("Deleting sst cache file [" + this.sstCache.getAbsolutePath() + "]");
                 }
-                ((BufferedStringsTable) sst).close();
-                sstCache.delete();
+                ((BufferedStringsTable) this.sst).close();
+                this.sstCache.delete();
             }
         }
     }
@@ -217,12 +217,12 @@ public class StreamingWorkbookReader implements Iterable<Sheet>, AutoCloseable {
 
         @Override
         public boolean hasNext() {
-            return iterator.hasNext();
+            return this.iterator.hasNext();
         }
 
         @Override
         public Sheet next() {
-            return iterator.next();
+            return this.iterator.next();
         }
 
         @Override

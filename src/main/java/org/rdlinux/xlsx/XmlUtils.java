@@ -44,42 +44,45 @@ public class XmlUtils {
         private Map<String, Set> prefixesByURI = new HashMap<String, Set>();
 
         public NamespaceContextImpl() {
-            addNamespace(XMLConstants.XML_NS_PREFIX, XMLConstants.XML_NS_URI);
-            addNamespace(XMLConstants.XMLNS_ATTRIBUTE, XMLConstants.XMLNS_ATTRIBUTE_NS_URI);
+            this.addNamespace(XMLConstants.XML_NS_PREFIX, XMLConstants.XML_NS_URI);
+            this.addNamespace(XMLConstants.XMLNS_ATTRIBUTE, XMLConstants.XMLNS_ATTRIBUTE_NS_URI);
         }
 
         public void addNamespace(String prefix, String namespaceURI) {
-            urisByPrefix.put(prefix, namespaceURI);
-            if (prefixesByURI.containsKey(namespaceURI)) {
-                (prefixesByURI.get(namespaceURI)).add(prefix);
+            this.urisByPrefix.put(prefix, namespaceURI);
+            if (this.prefixesByURI.containsKey(namespaceURI)) {
+                (this.prefixesByURI.get(namespaceURI)).add(prefix);
             } else {
                 Set<String> set = new HashSet<String>();
                 set.add(prefix);
-                prefixesByURI.put(namespaceURI, set);
+                this.prefixesByURI.put(namespaceURI, set);
             }
         }
 
+        @Override
         public String getNamespaceURI(String prefix) {
             if (prefix == null) {
                 throw new IllegalArgumentException("prefix cannot be null");
             }
-            if (urisByPrefix.containsKey(prefix)) {
-                return (String) urisByPrefix.get(prefix);
+            if (this.urisByPrefix.containsKey(prefix)) {
+                return (String) this.urisByPrefix.get(prefix);
             } else {
                 return XMLConstants.NULL_NS_URI;
             }
         }
 
+        @Override
         public String getPrefix(String namespaceURI) {
-            return (String) getPrefixes(namespaceURI).next();
+            return (String) this.getPrefixes(namespaceURI).next();
         }
 
+        @Override
         public Iterator getPrefixes(String namespaceURI) {
             if (namespaceURI == null) {
                 throw new IllegalArgumentException("namespaceURI cannot be null");
             }
-            if (prefixesByURI.containsKey(namespaceURI)) {
-                return ((Set) prefixesByURI.get(namespaceURI)).iterator();
+            if (this.prefixesByURI.containsKey(namespaceURI)) {
+                return ((Set) this.prefixesByURI.get(namespaceURI)).iterator();
             } else {
                 return Collections.EMPTY_SET.iterator();
             }

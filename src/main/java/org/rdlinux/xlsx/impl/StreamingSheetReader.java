@@ -64,12 +64,12 @@ public class StreamingSheetReader implements Iterable<Row> {
      */
     private boolean getRow() {
         try {
-            rowCache.clear();
-            while (rowCache.size() < rowCacheSize && parser.hasNext()) {
-                handleEvent(parser.nextEvent());
+            this.rowCache.clear();
+            while (this.rowCache.size() < this.rowCacheSize && this.parser.hasNext()) {
+                this.handleEvent(this.parser.nextEvent());
             }
-            rowCacheIterator = rowCache.iterator();
-            return rowCacheIterator.hasNext();
+            this.rowCacheIterator = this.rowCache.iterator();
+            return this.rowCacheIterator.hasNext();
         } catch (XMLStreamException e) {
             throw new ParseException("Error reading XML stream", e);
         }
@@ -102,23 +102,23 @@ public class StreamingSheetReader implements Iterable<Row> {
     private void handleEvent(XMLEvent event) {
         if (event.getEventType() == XMLStreamConstants.CHARACTERS) {
             Characters c = event.asCharacters();
-            lastContents += c.getData();
+            this.lastContents += c.getData();
         } else if (event.getEventType() == XMLStreamConstants.START_ELEMENT
-                && isSpreadsheetTag(event.asStartElement().getName())) {
+                && this.isSpreadsheetTag(event.asStartElement().getName())) {
             StartElement startElement = event.asStartElement();
             String tagLocalName = startElement.getName().getLocalPart();
 
             if ("row".equals(tagLocalName)) {
                 Attribute rowNumAttr = startElement.getAttributeByName(new QName("r"));
-                int rowIndex = currentRowNum;
+                int rowIndex = this.currentRowNum;
                 if (rowNumAttr != null) {
                     rowIndex = Integer.parseInt(rowNumAttr.getValue()) - 1;
-                    currentRowNum = rowIndex;
+                    this.currentRowNum = rowIndex;
                 }
                 Attribute isHiddenAttr = startElement.getAttributeByName(new QName("hidden"));
                 boolean isHidden = isHiddenAttr != null && ("1".equals(isHiddenAttr.getValue()) || "true".equals(isHiddenAttr.getValue()));
-                currentRow = new StreamingRow(sheet, rowIndex, isHidden);
-                currentColNum = firstColNum;
+                this.currentRow = new StreamingRow(this.sheet, rowIndex, isHidden);
+                this.currentColNum = this.firstColNum;
             } else if ("col".equals(tagLocalName)) {
                 Attribute isHiddenAttr = startElement.getAttributeByName(new QName("hidden"));
                 boolean isHidden = isHiddenAttr != null && ("1".equals(isHiddenAttr.getValue()) || "true".equals(isHiddenAttr.getValue()));
@@ -128,26 +128,26 @@ public class StreamingSheetReader implements Iterable<Row> {
                     int min = Integer.parseInt(minAttr.getValue()) - 1;
                     int max = Integer.parseInt(maxAttr.getValue()) - 1;
                     for (int columnIndex = min; columnIndex <= max; columnIndex++) {
-                        hiddenColumns.add(columnIndex);
+                        this.hiddenColumns.add(columnIndex);
                     }
                 }
             } else if ("c".equals(tagLocalName)) {
                 Attribute ref = startElement.getAttributeByName(new QName("r"));
 
                 if (ref != null) {
-                    String[] coord = splitCellRef(ref.getValue());
-                    currentColNum = CellReference.convertColStringToIndex(coord[0]);
-                    currentCell = new StreamingCell(sheet, currentColNum, Integer.parseInt(coord[1]) - 1, use1904Dates);
+                    String[] coord = this.splitCellRef(ref.getValue());
+                    this.currentColNum = CellReference.convertColStringToIndex(coord[0]);
+                    this.currentCell = new StreamingCell(this.sheet, this.currentColNum, Integer.parseInt(coord[1]) - 1, this.use1904Dates);
                 } else {
-                    currentCell = new StreamingCell(sheet, currentColNum, currentRowNum, use1904Dates);
+                    this.currentCell = new StreamingCell(this.sheet, this.currentColNum, this.currentRowNum, this.use1904Dates);
                 }
-                setFormatString(startElement, currentCell);
+                this.setFormatString(startElement, this.currentCell);
 
                 Attribute type = startElement.getAttributeByName(new QName("t"));
                 if (type != null) {
-                    currentCell.setType(type.getValue());
+                    this.currentCell.setType(type.getValue());
                 } else {
-                    currentCell.setType("n");
+                    this.currentCell.setType("n");
                 }
 
                 Attribute style = startElement.getAttributeByName(new QName("s"));
@@ -155,12 +155,12 @@ public class StreamingSheetReader implements Iterable<Row> {
                     String indexStr = style.getValue();
                     try {
                         int index = Integer.parseInt(indexStr);
-                        currentCell.setCellStyle(stylesTable.getStyleAt(index));
+                        this.currentCell.setCellStyle(this.stylesTable.getStyleAt(index));
                     } catch (NumberFormatException nfe) {
                         log.warn("Ignoring invalid style index {}", indexStr);
                     }
                 } else {
-                    currentCell.setCellStyle(stylesTable.getStyleAt(0));
+                    this.currentCell.setCellStyle(this.stylesTable.getStyleAt(0));
                 }
             } else if ("dimension".equals(tagLocalName)) {
                 Attribute refAttr = startElement.getAttributeByName(new QName("ref"));
@@ -170,7 +170,7 @@ public class StreamingSheetReader implements Iterable<Row> {
                     for (int i = ref.length() - 1; i >= 0; i--) {
                         if (!Character.isDigit(ref.charAt(i))) {
                             try {
-                                lastRowNum = Integer.parseInt(ref.substring(i + 1)) - 1;
+                                this.lastRowNum = Integer.parseInt(ref.substring(i + 1)) - 1;
                             } catch (NumberFormatException ignore) {
                             }
                             break;
@@ -178,37 +178,37 @@ public class StreamingSheetReader implements Iterable<Row> {
                     }
                     for (int i = 0; i < ref.length(); i++) {
                         if (!Character.isAlphabetic(ref.charAt(i))) {
-                            firstColNum = CellReference.convertColStringToIndex(ref.substring(0, i));
+                            this.firstColNum = CellReference.convertColStringToIndex(ref.substring(0, i));
                             break;
                         }
                     }
                 }
             } else if ("f".equals(tagLocalName)) {
-                if (currentCell != null) {
-                    currentCell.setFormulaType(true);
+                if (this.currentCell != null) {
+                    this.currentCell.setFormulaType(true);
                 }
             }
 
             // Clear contents cache
-            lastContents = "";
+            this.lastContents = "";
         } else if (event.getEventType() == XMLStreamConstants.END_ELEMENT
-                && isSpreadsheetTag(event.asEndElement().getName())) {
+                && this.isSpreadsheetTag(event.asEndElement().getName())) {
             EndElement endElement = event.asEndElement();
             String tagLocalName = endElement.getName().getLocalPart();
 
             if ("v".equals(tagLocalName) || "t".equals(tagLocalName)) {
-                currentCell.setRawContents(unformattedContents());
-                currentCell.setContentSupplier(formattedContents());
-            } else if ("row".equals(tagLocalName) && currentRow != null) {
-                rowCache.add(currentRow);
-                currentRowNum++;
+                this.currentCell.setRawContents(this.unformattedContents());
+                this.currentCell.setContentSupplier(this.formattedContents());
+            } else if ("row".equals(tagLocalName) && this.currentRow != null) {
+                this.rowCache.add(this.currentRow);
+                this.currentRowNum++;
             } else if ("c".equals(tagLocalName)) {
-                currentRow.getCellMap().put(currentCell.getColumnIndex(), currentCell);
-                currentCell = null;
-                currentColNum++;
+                this.currentRow.getCellMap().put(this.currentCell.getColumnIndex(), this.currentCell);
+                this.currentCell = null;
+                this.currentColNum++;
             } else if ("f".equals(tagLocalName)) {
-                if (currentCell != null) {
-                    currentCell.setFormula(lastContents);
+                if (this.currentCell != null) {
+                    this.currentCell.setFormula(this.lastContents);
                 }
             }
 
@@ -238,10 +238,10 @@ public class StreamingSheetReader implements Iterable<Row> {
      * @return hidden - <code>false</code> if the column is visible
      */
     boolean isColumnHidden(int columnIndex) {
-        if (rowCacheIterator == null) {
-            getRow();
+        if (this.rowCacheIterator == null) {
+            this.getRow();
         }
-        return hiddenColumns.contains(columnIndex);
+        return this.hiddenColumns.contains(columnIndex);
     }
 
     /**
@@ -250,10 +250,10 @@ public class StreamingSheetReader implements Iterable<Row> {
      * @return
      */
     int getLastRowNum() {
-        if (rowCacheIterator == null) {
-            getRow();
+        if (this.rowCacheIterator == null) {
+            this.getRow();
         }
-        return lastRowNum;
+        return this.lastRowNum;
     }
 
     /**
@@ -269,9 +269,9 @@ public class StreamingSheetReader implements Iterable<Row> {
         XSSFCellStyle style = null;
 
         if (cellStyleString != null) {
-            style = stylesTable.getStyleAt(Integer.parseInt(cellStyleString));
-        } else if (stylesTable.getNumCellStyles() > 0) {
-            style = stylesTable.getStyleAt(0);
+            style = this.stylesTable.getStyleAt(Integer.parseInt(cellStyleString));
+        } else if (this.stylesTable.getNumCellStyles() > 0) {
+            style = this.stylesTable.getStyleAt(0);
         }
 
         if (style != null) {
@@ -296,7 +296,7 @@ public class StreamingSheetReader implements Iterable<Row> {
      * @return
      */
     Supplier formattedContents() {
-        return getFormatterForType(currentCell.getType());
+        return this.getFormatterForType(this.currentCell.getType());
     }
 
     /**
@@ -308,45 +308,45 @@ public class StreamingSheetReader implements Iterable<Row> {
     private Supplier getFormatterForType(String type) {
         switch (type) {
             case "s":           //string stored in shared table
-                if (!lastContents.isEmpty()) {
-                    int idx = Integer.parseInt(lastContents);
-                    return new StringSupplier(sst.getItemAt(idx).toString());
+                if (!this.lastContents.isEmpty()) {
+                    int idx = Integer.parseInt(this.lastContents);
+                    return new StringSupplier(this.sst.getItemAt(idx).toString());
                 }
-                return new StringSupplier(lastContents);
+                return new StringSupplier(this.lastContents);
             case "inlineStr":   //inline string (not in sst)
             case "str":
-                return new StringSupplier(new XSSFRichTextString(lastContents).toString());
+                return new StringSupplier(new XSSFRichTextString(this.lastContents).toString());
             case "e":           //error type
-                return new StringSupplier("ERROR:  " + lastContents);
+                return new StringSupplier("ERROR:  " + this.lastContents);
             case "n":           //numeric type
-                if (currentCell.getNumericFormat() != null && lastContents.length() > 0) {
+                if (this.currentCell.getNumericFormat() != null && this.lastContents.length() > 0) {
                     // the formatRawCellContents operation incurs a significant overhead on large sheets,
                     // and we want to defer the execution of this method until the value is actually needed.
                     // it is not needed in all cases..
-                    final String currentLastContents = lastContents;
-                    final int currentNumericFormatIndex = currentCell.getNumericFormatIndex();
-                    final String currentNumericFormat = currentCell.getNumericFormat();
+                    final String currentLastContents = this.lastContents;
+                    final int currentNumericFormatIndex = this.currentCell.getNumericFormatIndex();
+                    final String currentNumericFormat = this.currentCell.getNumericFormat();
 
                     return new Supplier() {
                         String cachedContent;
 
                         @Override
                         public Object getContent() {
-                            if (cachedContent == null) {
-                                cachedContent = dataFormatter.formatRawCellContents(
+                            if (this.cachedContent == null) {
+                                this.cachedContent = StreamingSheetReader.this.dataFormatter.formatRawCellContents(
                                         Double.parseDouble(currentLastContents),
                                         currentNumericFormatIndex,
                                         currentNumericFormat);
                             }
 
-                            return cachedContent;
+                            return this.cachedContent;
                         }
                     };
                 } else {
-                    return new StringSupplier(lastContents);
+                    return new StringSupplier(this.lastContents);
                 }
             default:
-                return new StringSupplier(lastContents);
+                return new StringSupplier(this.lastContents);
         }
     }
 
@@ -356,17 +356,17 @@ public class StreamingSheetReader implements Iterable<Row> {
      * @return
      */
     String unformattedContents() {
-        switch (currentCell.getType()) {
+        switch (this.currentCell.getType()) {
             case "s":           //string stored in shared table
-                if (!lastContents.isEmpty()) {
-                    int idx = Integer.parseInt(lastContents);
-                    return sst.getItemAt(idx).toString();
+                if (!this.lastContents.isEmpty()) {
+                    int idx = Integer.parseInt(this.lastContents);
+                    return this.sst.getItemAt(idx).toString();
                 }
-                return lastContents;
+                return this.lastContents;
             case "inlineStr":   //inline string (not in sst)
-                return new XSSFRichTextString(lastContents).toString();
+                return new XSSFRichTextString(this.lastContents).toString();
             default:
-                return lastContents;
+                return this.lastContents;
         }
     }
 
@@ -384,7 +384,7 @@ public class StreamingSheetReader implements Iterable<Row> {
 
     public void close() {
         try {
-            parser.close();
+            this.parser.close();
         } catch (XMLStreamException e) {
             throw new CloseException(e);
         }
@@ -392,19 +392,19 @@ public class StreamingSheetReader implements Iterable<Row> {
 
     class StreamingRowIterator implements Iterator<Row> {
         public StreamingRowIterator() {
-            if (rowCacheIterator == null) {
-                hasNext();
+            if (StreamingSheetReader.this.rowCacheIterator == null) {
+                this.hasNext();
             }
         }
 
         @Override
         public boolean hasNext() {
-            return (rowCacheIterator != null && rowCacheIterator.hasNext()) || getRow();
+            return (StreamingSheetReader.this.rowCacheIterator != null && StreamingSheetReader.this.rowCacheIterator.hasNext()) || StreamingSheetReader.this.getRow();
         }
 
         @Override
         public Row next() {
-            return rowCacheIterator.next();
+            return StreamingSheetReader.this.rowCacheIterator.next();
         }
 
         @Override
